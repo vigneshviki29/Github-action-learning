@@ -1,0 +1,12 @@
+name: 06 - Scheduled Run
+
+on:
+  schedule:
+    - cron: '* * * * *'     
+    
+jobs:
+  scheduled-task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nightly housekeeping
+        run: echo "Running scheduled job at $(date -u)"
