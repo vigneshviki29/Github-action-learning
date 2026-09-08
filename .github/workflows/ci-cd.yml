@@ -1,0 +1,48 @@
+name: Docker CI-CD Pipeline
+
+# Trigger the workflow on every push or pull request to the main branch
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Download the repository code to the runner
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Step 2: Build the Docker image using the Dockerfile
+      - name: Build Docker Image
+        run: |
+          echo "🔨 Starting Docker image build..."
+          docker build -t my-web-app:${{ github.sha }} .
+          docker tag my-web-app:${{ github.sha }} my-web-app:latest
+
+      # Step 3: Run the container to verify it launches successfully
+      - name: Run Docker Container
+        run: |
+          echo "🚀 Starting the Docker container..."
+          docker run -d -p 3000:3000 --name web-app-container my-web-app:latest
+          
+          # Give the application a few seconds to boot up
+          sleep 5
+
+      # Step 4: Verify the application is serving traffic
+      - name: Test Application Health
+        run: |
+          echo "🔍 Checking application health..."
+          curl --fail http://localhost:3000 || exit 1
+          echo "✅ Health check passed successfully!"
+
+      # Step 5: Clean up the running container
+      - name: Stop and Cleanup Container
+        if: always()
+        run: |
+          echo "🧹 Cleaning up local test container..."
+          docker stop web-app-container
+          docker rm web-app-container
